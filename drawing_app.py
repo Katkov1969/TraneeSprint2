@@ -67,6 +67,10 @@ class DrawingApp:
         size_menu.pack(side=tk.LEFT)
         size_menu.config(width=10)  # Устанавливаем ширину меню
 
+        # Кнопка "Ластик"
+        eraser_button = tk.Button(control_frame, text="Ластик", command=self.use_eraser)
+        eraser_button.pack(side=tk.LEFT)
+
     def update_brush_size(self, size: int) -> None:
         """
         Обновляет текущий размер кисти при выборе из выпадающего списка или слайдера.
@@ -118,6 +122,17 @@ class DrawingApp:
         Открывает диалоговое окно для выбора цвета кисти.
         """
         self.pen_color = colorchooser.askcolor(color=self.pen_color)[1]
+        self.previous_color = self.pen_color  # Сохраняем выбранный цвет кисти
+
+    def use_eraser(self) -> None:
+        """
+        Переключает инструмент на ластик, устанавливая цвет кисти в цвет фона.
+        """
+        if self.pen_color != "white":  # Если текущий цвет не белый, переключаемся на ластик
+            self.previous_color = self.pen_color  # Сохраняем текущий цвет кисти
+            self.pen_color = "white"
+        else:
+            self.pen_color = self.previous_color  # Если уже белый, возвращаем предыдущий цвет
 
     def save_image(self) -> None:
         """
