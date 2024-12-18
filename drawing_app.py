@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import colorchooser, filedialog, messagebox
-from PIL import Image, ImageDraw
-from typing import List
+from PIL import Image, ImageDraw, ImageTk
 
 
 class DrawingApp:
@@ -11,32 +10,39 @@ class DrawingApp:
         создает холст для рисования и задает начальные настройки.
         """
         self.root = root
-        self.root.title("Рисовалка с сохранением в PNG")
+        self.root.title("Рисовалка с пипеткой")
+
+        # Переменные для рисования
+        self.last_x, self.last_y = None, None
+        self.pen_color = 'black'  # Текущий цвет кисти
+        self.previous_color = self.pen_color  # Предыдущий цвет кисти для восстановления после ластика
+        self.brush_size = 1  # Начальный размер кисти
 
         # Создание изображения и инструмента для рисования
         self.image = Image.new("RGB", (600, 400), "white")
         self.draw = ImageDraw.Draw(self.image)
 
-        # Создание холста в интерфейсе
+        # Создание холста Tkinter
         self.canvas = tk.Canvas(root, width=600, height=400, bg='white')
         self.canvas.pack()
+
+        # Переменная для хранения изображения Tkinter
+        self.canvas_image = None
 
         # Инициализация пользовательского интерфейса
         self.setup_ui()
 
-        # Переменные для рисования
-        self.last_x, self.last_y = None, None
-        self.pen_color = 'black'
-        self.brush_size = 1  # Начальный размер кисти
-
         # Привязка событий мыши
-        self.canvas.bind('<B1-Motion>', self.paint)
-        self.canvas.bind('<ButtonRelease-1>', self.reset)
+        self.canvas.bind('<B1-Motion>', self.paint)  # ЛКМ для рисования
+        self.canvas.bind('<ButtonRelease-1>', self.reset)  # Сброс координат
+        self.canvas.bind('<Button-3>', self.pick_color)  # ПКМ для выбора цвета пипеткой
+
+        # Инициализируем изображение на холсте
+        self.update_canvas()
 
     def setup_ui(self) -> None:
         """
-        Создает элементы управления (кнопки, выпадающий список и слайдер)
-        для настройки приложения.
+        Создает элементы управления (кнопки и слайдеры) для настройки приложения.
         """
         control_frame = tk.Frame(self.root)
         control_frame.pack(fill=tk.X)
@@ -56,36 +62,29 @@ class DrawingApp:
         # Слайдер для изменения размера кисти
         self.brush_size_scale = tk.Scale(
             control_frame, from_=1, to=10, orient=tk.HORIZONTAL, label="Размер кисти",
-            command=lambda value: self.update_brush_size(value)  # Обновляем размер кисти
+            command=lambda value: self.update_brush_size(value)
         )
         self.brush_size_scale.pack(side=tk.LEFT)
-
-        # Выпадающий список для выбора размера кисти
-        sizes = [1, 2, 5, 10]  # Предопределенные размеры кисти
-        self.brush_size_var = tk.IntVar(value=sizes[0])  # Переменная для хранения текущего размера кисти
-        size_menu = tk.OptionMenu(control_frame, self.brush_size_var, *sizes, command=self.update_brush_size)
-        size_menu.pack(side=tk.LEFT)
-        size_menu.config(width=10)  # Устанавливаем ширину меню
 
         # Кнопка "Ластик"
         eraser_button = tk.Button(control_frame, text="Ластик", command=self.use_eraser)
         eraser_button.pack(side=tk.LEFT)
 
+        # Метка для отображения текущего цвета кисти
+        self.color_label = tk.Label(control_frame, text="Цвет кисти", bg=self.pen_color, width=10)
+        self.color_label.pack(side=tk.LEFT)
+
     def update_brush_size(self, size: int) -> None:
         """
-        Обновляет текущий размер кисти при выборе из выпадающего списка или слайдера.
-
-        :param size: Новый размер кисти, выбранный пользователем.
+        Обновляет текущий размер кисти при изменении значения слайдера.
         """
-        self.brush_size = int(size)  # Обновляем текущий размер кисти
+        self.brush_size = int(size)
 
     def paint(self, event: tk.Event) -> None:
         """
         Рисует линию на холсте при движении мыши.
-
-        :param event: Событие, связанное с движением мыши.
         """
-        if self.last_x and self.last_y:
+        if self.last_x is not None and self.last_y is not None:
             # Рисуем линию на холсте Tkinter
             self.canvas.create_line(
                 self.last_x, self.last_y, event.x, event.y,
@@ -101,11 +100,12 @@ class DrawingApp:
         self.last_x = event.x
         self.last_y = event.y
 
+        # Обновляем отображение изображения на холсте
+        self.update_canvas()
+
     def reset(self, event: tk.Event) -> None:
         """
         Сбрасывает координаты кисти после завершения рисования.
-
-        :param event: Событие завершения рисования (отпускание кнопки мыши).
         """
         self.last_x, self.last_y = None, None
 
@@ -116,6 +116,7 @@ class DrawingApp:
         self.canvas.delete("all")
         self.image = Image.new("RGB", (600, 400), "white")
         self.draw = ImageDraw.Draw(self.image)
+        self.update_canvas()
 
     def choose_color(self) -> None:
         """
@@ -123,16 +124,47 @@ class DrawingApp:
         """
         self.pen_color = colorchooser.askcolor(color=self.pen_color)[1]
         self.previous_color = self.pen_color  # Сохраняем выбранный цвет кисти
+        self.update_color_label()
 
     def use_eraser(self) -> None:
         """
         Переключает инструмент на ластик, устанавливая цвет кисти в цвет фона.
         """
-        if self.pen_color != "white":  # Если текущий цвет не белый, переключаемся на ластик
-            self.previous_color = self.pen_color  # Сохраняем текущий цвет кисти
+        if self.pen_color != "white":
+            self.previous_color = self.pen_color
             self.pen_color = "white"
         else:
-            self.pen_color = self.previous_color  # Если уже белый, возвращаем предыдущий цвет
+            self.pen_color = self.previous_color
+        self.update_color_label()
+
+    def pick_color(self, event: tk.Event) -> None:
+        """
+        Инструмент "Пипетка". Устанавливает цвет кисти в цвет пикселя под правым кликом мыши.
+        """
+        # Координаты клика
+        x, y = event.x, event.y
+
+        try:
+            # Получаем цвет пикселя из изображения
+            color = self.image.getpixel((x, y))
+            # Преобразуем RGB в HEX
+            self.pen_color = f'#{color[0]:02x}{color[1]:02x}{color[2]:02x}'
+            self.previous_color = self.pen_color
+
+            # Обновляем метку цвета
+            self.update_color_label()
+
+            # Выводим информацию для отладки
+            print(f"Выбран цвет: {self.pen_color}")
+        except IndexError:
+            # Если клик за пределами изображения
+            messagebox.showwarning("Ошибка", "Клик вне области рисунка!")
+
+    def update_color_label(self) -> None:
+        """
+        Обновляет метку текущего цвета кисти в интерфейсе.
+        """
+        self.color_label.config(bg=self.pen_color)
 
     def save_image(self) -> None:
         """
@@ -145,6 +177,13 @@ class DrawingApp:
             self.image.save(file_path)
             messagebox.showinfo("Информация", "Изображение успешно сохранено!")
 
+    def update_canvas(self) -> None:
+        """
+        Синхронизирует изображение Pillow с холстом Tkinter.
+        """
+        self.canvas_image = ImageTk.PhotoImage(self.image)
+        self.canvas.create_image(0, 0, anchor=tk.NW, image=self.canvas_image)
+
 
 def main() -> None:
     """
@@ -156,4 +195,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\nПрограмма была прервана пользователем.")
