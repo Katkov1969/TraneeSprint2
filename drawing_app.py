@@ -37,6 +37,10 @@ class DrawingApp:
         self.canvas.bind('<ButtonRelease-1>', self.reset)  # Сброс координат
         self.canvas.bind('<Button-3>', self.pick_color)  # ПКМ для выбора цвета пипеткой
 
+        # Привязка горячих клавиш
+        self.root.bind('<Control-s>', self.save_image)  # Сохранение изображения
+        self.root.bind('<Control-c>', self.choose_color)  # Выбор цвета кисти
+
         # Инициализируем изображение на холсте
         self.update_canvas()
 
@@ -118,7 +122,7 @@ class DrawingApp:
         self.draw = ImageDraw.Draw(self.image)
         self.update_canvas()
 
-    def choose_color(self) -> None:
+    def choose_color(self, event=None) -> None:
         """
         Открывает диалоговое окно для выбора цвета кисти.
         """
@@ -166,7 +170,7 @@ class DrawingApp:
         """
         self.color_label.config(bg=self.pen_color)
 
-    def save_image(self) -> None:
+    def save_image(self, event=None) -> None:
         """
         Сохраняет текущее изображение в формате PNG.
         """
