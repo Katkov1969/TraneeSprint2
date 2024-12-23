@@ -78,6 +78,10 @@ class DrawingApp:
         self.color_label = tk.Label(control_frame, text="Цвет кисти", bg=self.pen_color, width=10)
         self.color_label.pack(side=tk.LEFT)
 
+        # Маленький холст для предварительного просмотра цвета кисти
+        self.preview_canvas = tk.Canvas(control_frame, width=30, height=30, bg=self.pen_color, bd=2, relief=tk.SUNKEN)
+        self.preview_canvas.pack(side=tk.LEFT)
+
     def update_brush_size(self, size: int) -> None:
         """
         Обновляет текущий размер кисти при изменении значения слайдера.
@@ -128,7 +132,8 @@ class DrawingApp:
         """
         self.pen_color = colorchooser.askcolor(color=self.pen_color)[1]
         self.previous_color = self.pen_color  # Сохраняем выбранный цвет кисти
-        self.update_color_label()
+        #self.update_color_label()
+        self.update_color_preview()
 
     def use_eraser(self) -> None:
         """
@@ -139,7 +144,8 @@ class DrawingApp:
             self.pen_color = "white"
         else:
             self.pen_color = self.previous_color
-        self.update_color_label()
+        #self.update_color_label()
+        self.update_color_preview()
 
     def pick_color(self, event: tk.Event) -> None:
         """
@@ -156,7 +162,8 @@ class DrawingApp:
             self.previous_color = self.pen_color
 
             # Обновляем метку цвета
-            self.update_color_label()
+            # self.update_color_label()
+            self.update_color_preview()
 
             # Выводим информацию для отладки
             print(f"Выбран цвет: {self.pen_color}")
@@ -169,6 +176,12 @@ class DrawingApp:
         Обновляет метку текущего цвета кисти в интерфейсе.
         """
         self.color_label.config(bg=self.pen_color)
+
+    def update_color_preview(self) -> None:
+        """
+        Обновляет предварительный просмотр текущего цвета кисти.
+        """
+        self.preview_canvas.config(bg=self.pen_color)
 
     def save_image(self, event=None) -> None:
         """
