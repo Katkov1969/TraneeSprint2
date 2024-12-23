@@ -86,7 +86,8 @@ pick_color
 вызывается self.update_color_preview().
 
 Пример выполнения:
-![Предварительный просмотр цвета кисти](https://github.com/user-attachments/assets/2dbfa542-0e6f-47aa-97c7-f0ffee3a5e3b)
+![Предварительный просмотр цвета кисти](https://github.com/user-attachments/assets/b8eb806b-0939-4917-9244-317e8c7a3f20)
+
 
 
 
