@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import colorchooser, filedialog, messagebox
+from tkinter import colorchooser, filedialog, messagebox, simpledialog
 from PIL import Image, ImageDraw, ImageTk
 
 
@@ -81,6 +81,10 @@ class DrawingApp:
         # Маленький холст для предварительного просмотра цвета кисти
         self.preview_canvas = tk.Canvas(control_frame, width=30, height=30, bg=self.pen_color, bd=2, relief=tk.SUNKEN)
         self.preview_canvas.pack(side=tk.LEFT)
+
+        # Кнопка изменения размера холста
+        resize_button = tk.Button(control_frame, text="Изменить размер холста", command=self.resize_canvas)
+        resize_button.pack(side=tk.LEFT, padx=5)
 
     def update_brush_size(self, size: int) -> None:
         """
@@ -200,6 +204,29 @@ class DrawingApp:
         """
         self.canvas_image = ImageTk.PhotoImage(self.image)
         self.canvas.create_image(0, 0, anchor=tk.NW, image=self.canvas_image)
+
+    def resize_canvas(self) -> None:
+        """
+        Изменяет размер холста на основе пользовательского ввода.
+        """
+        new_width = simpledialog.askinteger("Изменить ширину", "Введите новую ширину:", minvalue=100, maxvalue=2000)
+        new_height = simpledialog.askinteger("Изменить высоту", "Введите новую высоту:", minvalue=100, maxvalue=2000)
+
+        if new_width and new_height:
+            self.canvas_width = new_width
+            self.canvas_height = new_height
+
+            # Обновляем размер холста Tkinter
+            self.canvas.config(width=self.canvas_width, height=self.canvas_height)
+
+            # Создаем новое изображение Pillow с новыми размерами
+            new_image = Image.new("RGB", (self.canvas_width, self.canvas_height), "white")
+            new_image.paste(self.image, (0, 0))  # Копируем старые данные на новый холст
+            self.image = new_image
+            self.draw = ImageDraw.Draw(self.image)
+
+            # Обновляем холст
+            self.update_canvas()
 
 
 def main() -> None:
