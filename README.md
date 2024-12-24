@@ -88,6 +88,24 @@ pick_color
 Пример выполнения:
 ![Предварительный просмотр цвета кисти](https://github.com/user-attachments/assets/b8eb806b-0939-4917-9244-317e8c7a3f20)
 
++++++++++++++++++++++++++++++++++++++++++++++++++++
+ЗАДАНИЕ 6
+Изменения в коде:
+1. Из tkinter импортируется simpledialog.
+
+2. В методе setup_ui добавлена кнопка Изменить размер холста:
+     resize_button = tk.Button(control_frame, text="Изменить размер холста", command=self.resize_canvas)
+     resize_button.pack(side=tk.LEFT, padx=5)
+
+3. Добавлен новый метод resize_canvas
+      Этот метод открывает два диалоговых окна (simpledialog.askinteger) для ввода новой ширины и высоты холста.
+      Создается новый объект Image с указанными размерами, и старое изображение копируется на новый холст.
+      После изменения размеров обновляются параметры self.canvas_width и self.canvas_height, а также свойства Tkinter-холста.
+Пример выполненния:
+![Изменения размеров холста](https://github.com/user-attachments/assets/8d5f638f-a7ec-4d9f-bd37-56fe844a1486)
+
+
+
 
 
 
