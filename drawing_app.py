@@ -17,9 +17,15 @@ class DrawingApp:
         self.pen_color = 'black'  # Текущий цвет кисти
         self.previous_color = self.pen_color  # Предыдущий цвет кисти для восстановления после ластика
         self.brush_size = 1  # Начальный размер кисти
+        self.text_mode = False  # Режим ввода текста
+
+        # Размеры холста
+        self.canvas_width = 600
+        self.canvas_height = 400
+        self.canvas_bg_color = "white"  # Цвет фона холста
 
         # Создание изображения и инструмента для рисования
-        self.image = Image.new("RGB", (600, 400), "white")
+        self.image = Image.new("RGB", (self.canvas_width, self.canvas_height), self.canvas_bg_color)
         self.draw = ImageDraw.Draw(self.image)
 
         # Создание холста Tkinter
@@ -36,6 +42,7 @@ class DrawingApp:
         self.canvas.bind('<B1-Motion>', self.paint)  # ЛКМ для рисования
         self.canvas.bind('<ButtonRelease-1>', self.reset)  # Сброс координат
         self.canvas.bind('<Button-3>', self.pick_color)  # ПКМ для выбора цвета пипеткой
+        self.canvas.bind('<Button-1>', self.add_text)  # ЛКМ для установки текста
 
         # Привязка горячих клавиш
         self.root.bind('<Control-s>', self.save_image)  # Сохранение изображения
@@ -73,6 +80,14 @@ class DrawingApp:
         # Кнопка "Ластик"
         eraser_button = tk.Button(control_frame, text="Ластик", command=self.use_eraser)
         eraser_button.pack(side=tk.LEFT)
+
+        # Кнопка для добавления текста
+        text_button = tk.Button(control_frame, text="Текст", command=self.activate_text_mode)
+        text_button.pack(side=tk.LEFT)
+
+        # Кнопка изменения цвета фона
+        bg_color_button = tk.Button(control_frame, text="Изменить фон", command=self.change_background_color)
+        bg_color_button.pack(side=tk.LEFT)
 
         # Метка для отображения текущего цвета кисти
         self.color_label = tk.Label(control_frame, text="Цвет кисти", bg=self.pen_color, width=10)
@@ -126,7 +141,7 @@ class DrawingApp:
         Очищает холст и создает новое изображение.
         """
         self.canvas.delete("all")
-        self.image = Image.new("RGB", (600, 400), "white")
+        self.image = Image.new("RGB", (self.canvas_width, self.canvas_height), self.canvas_bg_color)
         self.draw = ImageDraw.Draw(self.image)
         self.update_canvas()
 
@@ -143,13 +158,47 @@ class DrawingApp:
         """
         Переключает инструмент на ластик, устанавливая цвет кисти в цвет фона.
         """
-        if self.pen_color != "white":
+        if self.pen_color != self.canvas_bg_color:
             self.previous_color = self.pen_color
-            self.pen_color = "white"
+            self.pen_color = self.canvas_bg_color
         else:
             self.pen_color = self.previous_color
-        #self.update_color_label()
         self.update_color_preview()
+
+
+    def activate_text_mode(self) -> None:
+        """
+        Активирует режим текста.
+        """
+        self.text_mode = True
+        messagebox.showinfo("Информация", "Нажмите на холст, чтобы добавить текст.")
+
+    def add_text(self, event: tk.Event) -> None:
+        """
+        Добавляет текст на холст в указанной точке.
+        """
+        if not self.text_mode:
+            return
+
+        text = simpledialog.askstring("Введите текст", "Введите текст для добавления:")
+        if text:
+            # Рисуем текст на изображении Pillow
+            self.draw.text((event.x, event.y), text, fill=self.pen_color)
+            # Обновляем холст
+            self.update_canvas()
+
+        # Выходим из режима текста
+        self.text_mode = False
+
+    def change_background_color(self) -> None:
+        """
+        Изменяет цвет фона холста.
+        """
+        new_color = colorchooser.askcolor(color=self.canvas_bg_color)[1]
+        if new_color:
+            self.canvas_bg_color = new_color
+            self.canvas.config(bg=self.canvas_bg_color)
+            self.clear_canvas()  # Очищаем холст (сбрасываем изображение)
 
     def pick_color(self, event: tk.Event) -> None:
         """
